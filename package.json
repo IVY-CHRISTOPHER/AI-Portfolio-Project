@@ -4,9 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cd client && npm run dev"
+    "build": "vite build",
+    "start": "npm --prefix client run build && npx serve -s client/dist -l $PORT"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.5"
+  }
 }
