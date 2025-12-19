@@ -92,7 +92,7 @@ function App() {
     topic: 'Start a project',
   })
 
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const apiBase = import.meta.env.API_URL
 
   // Load projects and services from the API, fallback to defaults on failure
   useEffect(() => {
@@ -136,7 +136,7 @@ function App() {
       return
     }
     const code = window.prompt('Enter admin access code')
-    const allowedCode = import.meta.env.VITE_ADMIN_CODE || 'admin123'
+    const allowedCode = import.meta.env.ADMIN_CODE
     if (code && code === allowedCode) {
       setIsAdmin(true)
     } else if (code !== null) {
@@ -147,13 +147,39 @@ function App() {
 
   const getProjectId = (project) => project._id || project.title
 
+  // Persist project photo (optimistic update, then PATCH if it exists in DB)
+  const persistProjectPhoto = async (project, photo) => {
+    const targetId = getProjectId(project)
+    const previousPhoto = project.photo || ''
+    setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo } : p)))
+
+    if (!project._id) return
+
+    try {
+      const res = await fetch(`${apiBase}/api/projects/${project._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      const saved = await res.json()
+      setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: saved.photo || photo } : p)))
+      setAdminMessage('Photo saved')
+    } catch (err) {
+      console.error(err)
+      setAdminMessage('Could not save photo')
+      setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: previousPhoto } : p)))
+    } finally {
+      setTimeout(() => setAdminMessage(''), 2000)
+    }
+  }
+
   // Prompt admin to add a photo URL to a project
   const handleAddPhoto = (project) => {
     if (!isAdmin) return
     const url = window.prompt('Enter a photo URL for this project')
     if (!url) return
-    const targetId = getProjectId(project)
-    setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: url } : p)))
+    persistProjectPhoto(project, url)
   }
 
   // Drag/drop handlers for project photo updates
@@ -184,8 +210,7 @@ function App() {
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = reader.result
-      const targetId = getProjectId(project)
-      setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: dataUrl } : p)))
+      persistProjectPhoto(project, dataUrl)
     }
     reader.readAsDataURL(file)
   }
