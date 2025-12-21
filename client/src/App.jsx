@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import './App.css'
 import TopBar from './components/TopBar'
 import Hero from './components/Hero'
@@ -537,6 +538,7 @@ function App() {
         onSave={submitEdit}
       />
       <ConfirmModal isOpen={!!deleteModal.item} item={deleteModal.item} type={deleteModal.type} onCancel={closeDeleteModal} onConfirm={confirmDelete} />
+      <Analytics />
     </div>
   )
 }
