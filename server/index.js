@@ -22,7 +22,7 @@ const port = process.env.PORT || 5000
 connectDb() // connect to MongoDB before starting server
   .then(() => {
     app.listen(port, () => {
-      console.log(`API running on http://localhost:${port}`)
+      console.log(`API running on port:${port}`)
     })
   })
   .catch((err) => {
