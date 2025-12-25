@@ -10,6 +10,8 @@ import ContactModal from './components/ContactModal'
 import EditModal from './components/EditModal'
 import ConfirmModal from './components/ConfirmModal'
 
+console.log(import.meta.env.VITE_ADMIN_CODE)
+
 const initialServices = [
   {
     title: 'Product strategy',
@@ -136,7 +138,7 @@ function App() {
       return
     }
     const code = window.prompt('Enter admin access code')
-    const allowedCode = import.meta.env.ADMIN_CODE
+    const allowedCode = import.meta.env.VITE_ADMIN_CODE
     if (code && code === allowedCode) {
       setIsAdmin(true)
     } else if (code !== null) {
