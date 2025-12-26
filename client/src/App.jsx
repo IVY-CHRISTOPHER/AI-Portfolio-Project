@@ -95,15 +95,15 @@ function App() {
     topic: 'Start a project',
   })
 
-  const apiBase = import.meta.env.VITE_API_URL
+  // const apiBase = import.meta.env.VITE_API_URL
 
   // Load projects and services from the API
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [projectsResult, servicesResult] = await Promise.allSettled([
-          axios.get(`${apiBase}/api/projects`),
-          axios.get(`${apiBase}/api/services`),
+          axios.get(`/api/projects`),
+          axios.get(`/api/services`),
         ])
 
         if (projectsResult.status === 'fulfilled') {
@@ -123,7 +123,7 @@ function App() {
       }
     }
     fetchData()
-  }, [apiBase])
+  },[])
 
   // Open/close contact modal with preset topic
   const openModal = (topic) => {
@@ -164,7 +164,7 @@ function App() {
     if (!project._id) return
 
     try {
-      const { data: saved } = await axios.patch(`${apiBase}/api/projects/${project._id}`, { photo })
+      const { data: saved } = await axios.patch(`/api/projects/${project._id}`, { photo })
       setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: saved?.photo || photo } : p)))
       setAdminMessage('Photo saved')
     } catch (err) {
@@ -258,7 +258,7 @@ function App() {
     )
     setIsSending(true)
     try {
-      await axios.post(`${apiBase}/api/contact`, formData)
+      await axios.post(`/api/contact`, formData)
       setAdminMessage(successMessage)
       setFormData({ name: '', email: '', message: '', topic: 'Start a project' })
       setIsModalOpen(false)
@@ -320,7 +320,7 @@ function App() {
           }
     try {
       const endpoint = adminForm.mode === 'project' ? '/api/projects' : '/api/services'
-      const { data: created } = await axios.post(`${apiBase}${endpoint}`, payload)
+      const { data: created } = await axios.post(`${endpoint}`, payload)
       if (adminForm.mode === 'project') {
         setProjectList((prev) => [{ ...created }, ...prev])
       } else {
@@ -396,7 +396,7 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const { data } = await axios.patch(`${apiBase}/api/projects/${editModal.item._id}`, payload)
+          const { data } = await axios.patch(`/api/projects/${editModal.item._id}`, payload)
           saved = data
         }
         setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, ...saved } : p)))
@@ -411,7 +411,7 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const { data } = await axios.patch(`${apiBase}/api/services/${editModal.item._id}`, payload)
+          const { data } = await axios.patch(`/api/services/${editModal.item._id}`, payload)
           saved = data
         }
         setServicesList((prev) => prev.map((s) => ((s._id || s.title) === targetId ? { ...s, ...saved } : s)))
@@ -433,14 +433,14 @@ function App() {
       if (type === 'project') {
         const targetId = getProjectId(deleteModal.item)
         if (deleteModal.item._id) {
-          await axios.delete(`${apiBase}/api/projects/${deleteModal.item._id}`)
+          await axios.delete(`/api/projects/${deleteModal.item._id}`)
         }
         setProjectList((prev) => prev.filter((p) => getProjectId(p) !== targetId))
         setAdminMessage('Project deleted')
       } else if (type === 'service') {
         const targetId = deleteModal.item._id || deleteModal.item.title
         if (deleteModal.item._id) {
-          await axios.delete(`${apiBase}/api/services/${deleteModal.item._id}`)
+          await axios.delete(`/api/services/${deleteModal.item._id}`)
         }
         setServicesList((prev) => prev.filter((s) => (s._id || s.title) !== targetId))
         setAdminMessage('Service deleted')
