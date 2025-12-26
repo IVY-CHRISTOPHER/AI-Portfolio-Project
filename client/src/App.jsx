@@ -94,9 +94,9 @@ function App() {
     topic: 'Start a project',
   })
 
-  const apiBase = import.meta.env.API_URL
+  const apiBase = import.meta.env.VITE_API_URL
 
-  // Load projects and services from the API, fallback to defaults on failure
+  // Load projects and services from the API
   useEffect(() => {
     const fetchData = async () => {
       try {

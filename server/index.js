@@ -17,7 +17,7 @@ app.use('/api/projects', projectRoutes) // CRUD for projects
 app.use('/api/services', serviceRoutes) // CRUD for services
 app.use('/api/contact', contactRoutes) // email-sending endpoint
 
-const port = process.env.PORT
+const port = process.env.PORT || 3000
 
 connectDb() // connect to MongoDB before starting server
   .then(() => {
