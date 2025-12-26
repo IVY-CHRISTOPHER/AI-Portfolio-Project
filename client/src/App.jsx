@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import axios from 'axios'
 import './App.css'
 import TopBar from './components/TopBar'
 import Hero from './components/Hero'
@@ -100,17 +101,22 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [projectsRes, servicesRes] = await Promise.all([
-          fetch(`${apiBase}/api/projects`),
-          fetch(`${apiBase}/api/services`),
+        const [projectsResult, servicesResult] = await Promise.allSettled([
+          axios.get(`${apiBase}/api/projects`),
+          axios.get(`${apiBase}/api/services`),
         ])
-        if (projectsRes.ok) {
-          const projects = await projectsRes.json()
+
+        if (projectsResult.status === 'fulfilled') {
+          const projects = projectsResult.value?.data || []
           setProjectList(projects.map((p) => ({ ...p, photo: p.photo || '' })))
+        } else {
+          console.error('Failed to fetch projects', projectsResult.reason)
         }
-        if (servicesRes.ok) {
-          const services = await servicesRes.json()
-          setServicesList(services)
+
+        if (servicesResult.status === 'fulfilled') {
+          setServicesList(servicesResult.value?.data || [])
+        } else {
+          console.error('Failed to fetch services', servicesResult.reason)
         }
       } catch (err) {
         console.error('Failed to fetch from API, using defaults', err)
@@ -158,14 +164,8 @@ function App() {
     if (!project._id) return
 
     try {
-      const res = await fetch(`${apiBase}/api/projects/${project._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photo }),
-      })
-      if (!res.ok) throw new Error('Update failed')
-      const saved = await res.json()
-      setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: saved.photo || photo } : p)))
+      const { data: saved } = await axios.patch(`${apiBase}/api/projects/${project._id}`, { photo })
+      setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: saved?.photo || photo } : p)))
       setAdminMessage('Photo saved')
     } catch (err) {
       console.error(err)
@@ -248,7 +248,7 @@ function App() {
   }
 
   // Submit contact form to backend (with mailto fallback)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const successMessage = 'Message sent! I will reply within one business day.'
     const fallbackMessage = 'Could not send automatically; opening your email app instead.'
@@ -257,30 +257,23 @@ function App() {
       `Name: ${formData.name}\nEmail: ${formData.email}\nTopic: ${formData.topic}\n\n${formData.message}`
     )
     setIsSending(true)
-    fetch(`${apiBase}/api/contact`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Request failed')
-        setAdminMessage(successMessage)
-        setFormData({ name: '', email: '', message: '', topic: 'Start a project' })
-        setIsModalOpen(false)
-      })
-      .catch((err) => {
-        console.error('Contact send failed, falling back to mailto', err)
-        setAdminMessage(fallbackMessage)
-        window.location.href = `mailto:ivyssoftwaredevelopment@gmail.com?subject=${subject}&body=${body}`
-        setIsModalOpen(false)
-      })
-      .finally(() => {
-        setIsSending(false)
-        setTimeout(
-          () => setAdminMessage((current) => (current === successMessage || current === fallbackMessage ? '' : current)),
-          4000
-        )
-      })
+    try {
+      await axios.post(`${apiBase}/api/contact`, formData)
+      setAdminMessage(successMessage)
+      setFormData({ name: '', email: '', message: '', topic: 'Start a project' })
+      setIsModalOpen(false)
+    } catch (err) {
+      console.error('Contact send failed, falling back to mailto', err)
+      setAdminMessage(fallbackMessage)
+      window.location.href = `mailto:ivyssoftwaredevelopment@gmail.com?subject=${subject}&body=${body}`
+      setIsModalOpen(false)
+    } finally {
+      setIsSending(false)
+      setTimeout(
+        () => setAdminMessage((current) => (current === successMessage || current === fallbackMessage ? '' : current)),
+        4000
+      )
+    }
   }
 
   // Update admin form fields
@@ -327,13 +320,7 @@ function App() {
           }
     try {
       const endpoint = adminForm.mode === 'project' ? '/api/projects' : '/api/services'
-      const res = await fetch(`${apiBase}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error('Request failed')
-      const created = await res.json()
+      const { data: created } = await axios.post(`${apiBase}${endpoint}`, payload)
       if (adminForm.mode === 'project') {
         setProjectList((prev) => [{ ...created }, ...prev])
       } else {
@@ -409,13 +396,8 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const res = await fetch(`${apiBase}/api/projects/${editModal.item._id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          })
-          if (!res.ok) throw new Error('Update failed')
-          saved = await res.json()
+          const { data } = await axios.patch(`${apiBase}/api/projects/${editModal.item._id}`, payload)
+          saved = data
         }
         setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, ...saved } : p)))
         setAdminMessage('Project updated')
@@ -429,13 +411,8 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const res = await fetch(`${apiBase}/api/services/${editModal.item._id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          })
-          if (!res.ok) throw new Error('Update failed')
-          saved = await res.json()
+          const { data } = await axios.patch(`${apiBase}/api/services/${editModal.item._id}`, payload)
+          saved = data
         }
         setServicesList((prev) => prev.map((s) => ((s._id || s.title) === targetId ? { ...s, ...saved } : s)))
         setAdminMessage('Service updated')
@@ -456,16 +433,14 @@ function App() {
       if (type === 'project') {
         const targetId = getProjectId(deleteModal.item)
         if (deleteModal.item._id) {
-          const res = await fetch(`${apiBase}/api/projects/${deleteModal.item._id}`, { method: 'DELETE' })
-          if (!res.ok) throw new Error('Delete failed')
+          await axios.delete(`${apiBase}/api/projects/${deleteModal.item._id}`)
         }
         setProjectList((prev) => prev.filter((p) => getProjectId(p) !== targetId))
         setAdminMessage('Project deleted')
       } else if (type === 'service') {
         const targetId = deleteModal.item._id || deleteModal.item.title
         if (deleteModal.item._id) {
-          const res = await fetch(`${apiBase}/api/services/${deleteModal.item._id}`, { method: 'DELETE' })
-          if (!res.ok) throw new Error('Delete failed')
+          await axios.delete(`${apiBase}/api/services/${deleteModal.item._id}`)
         }
         setServicesList((prev) => prev.filter((s) => (s._id || s.title) !== targetId))
         setAdminMessage('Service deleted')
