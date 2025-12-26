@@ -102,8 +102,8 @@ function App() {
     const fetchData = async () => {
       try {
         const [projectsResult, servicesResult] = await Promise.allSettled([
-          axios.get(`/api/projects`),
-          axios.get(`/api/services`),
+          axios.get(`/projects`),
+          axios.get(`/services`),
         ])
 
         if (projectsResult.status === 'fulfilled') {
@@ -164,7 +164,7 @@ function App() {
     if (!project._id) return
 
     try {
-      const { data: saved } = await axios.patch(`/api/projects/${project._id}`, { photo })
+      const { data: saved } = await axios.patch(`/projects/${project._id}`, { photo })
       setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, photo: saved?.photo || photo } : p)))
       setAdminMessage('Photo saved')
     } catch (err) {
@@ -319,7 +319,7 @@ function App() {
             tags: adminForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
           }
     try {
-      const endpoint = adminForm.mode === 'project' ? '/api/projects' : '/api/services'
+      const endpoint = adminForm.mode === 'project' ? '/projects' : '/services'
       const { data: created } = await axios.post(`${endpoint}`, payload)
       if (adminForm.mode === 'project') {
         setProjectList((prev) => [{ ...created }, ...prev])
@@ -396,7 +396,7 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const { data } = await axios.patch(`/api/projects/${editModal.item._id}`, payload)
+          const { data } = await axios.patch(`/projects/${editModal.item._id}`, payload)
           saved = data
         }
         setProjectList((prev) => prev.map((p) => (getProjectId(p) === targetId ? { ...p, ...saved } : p)))
@@ -411,7 +411,7 @@ function App() {
       try {
         let saved = payload
         if (editModal.item._id) {
-          const { data } = await axios.patch(`/api/services/${editModal.item._id}`, payload)
+          const { data } = await axios.patch(`/services/${editModal.item._id}`, payload)
           saved = data
         }
         setServicesList((prev) => prev.map((s) => ((s._id || s.title) === targetId ? { ...s, ...saved } : s)))
@@ -433,14 +433,14 @@ function App() {
       if (type === 'project') {
         const targetId = getProjectId(deleteModal.item)
         if (deleteModal.item._id) {
-          await axios.delete(`/api/projects/${deleteModal.item._id}`)
+          await axios.delete(`/projects/${deleteModal.item._id}`)
         }
         setProjectList((prev) => prev.filter((p) => getProjectId(p) !== targetId))
         setAdminMessage('Project deleted')
       } else if (type === 'service') {
         const targetId = deleteModal.item._id || deleteModal.item.title
         if (deleteModal.item._id) {
-          await axios.delete(`/api/services/${deleteModal.item._id}`)
+          await axios.delete(`/services/${deleteModal.item._id}`)
         }
         setServicesList((prev) => prev.filter((s) => (s._id || s.title) !== targetId))
         setAdminMessage('Service deleted')
