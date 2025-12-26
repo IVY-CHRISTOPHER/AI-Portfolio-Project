@@ -95,35 +95,13 @@ function App() {
     topic: 'Start a project',
   })
 
-  // const apiBase = import.meta.env.VITE_API_URL
-
   // Load projects and services from the API
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [projectsResult, servicesResult] = await Promise.allSettled([
-          axios.get(`/projects`),
-          axios.get(`/services`),
-        ])
-
-        if (projectsResult.status === 'fulfilled') {
-          const projects = projectsResult.value?.data || []
-          setProjectList(projects.map((p) => ({ ...p, photo: p.photo || '' })))
-        } else {
-          console.error('Failed to fetch projects', projectsResult.reason)
-        }
-
-        if (servicesResult.status === 'fulfilled') {
-          setServicesList(servicesResult.value?.data || [])
-        } else {
-          console.error('Failed to fetch services', servicesResult.reason)
-        }
-      } catch (err) {
-        console.error('Failed to fetch from API, using defaults', err)
-      }
-    }
-    fetchData()
-  },[])
+    console.log(projectList)
+    axios.get(import.meta.env.VITE_API_URL, {withCredentials: true})
+    .then(res => setProjectList(res.data))
+    .catch(err => console.log(err))
+  },[projectList])
 
   // Open/close contact modal with preset topic
   const openModal = (topic) => {

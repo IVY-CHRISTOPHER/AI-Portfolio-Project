@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose')
+import { Schema, model } from 'mongoose';
 
 const projectSchema = new Schema(
   {
@@ -14,4 +14,4 @@ const projectSchema = new Schema(
   { timestamps: true }
 )
 
-module.exports = model('Project', projectSchema)
+export default model('Project', projectSchema);

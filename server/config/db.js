@@ -1,11 +1,8 @@
-const mongoose = require('mongoose')
+import mongoose from 'mongoose';
+import { connect } from 'mongoose';
+const db = "PersonalDB";
 
-const connectDb = async () => {
-  const uri = process.env.MONGODB_URI
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-}
-
-module.exports = { connectDb }
+connect(`mongodb://127.0.0.1:27017/${db}`)
+    .then(() => console.log(`Connected to MongoDB database: ${db}`))
+    .catch((err) => console.error('Failed to connect to MongoDB', err)
+  );
